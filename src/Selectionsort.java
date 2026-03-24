@@ -1,6 +1,6 @@
 import java.util.Arrays;
 
-public class BubbleSort<T extends Comparable<T>> implements IOrdenador<T>{
+public class Selectionsort<T extends Comparable<T>> implements IOrdenador<T>{
 
     private int comparacoes;
     private int movimentacoes;
@@ -46,14 +46,9 @@ public class BubbleSort<T extends Comparable<T>> implements IOrdenador<T>{
         T[] dadosOrdenados = Arrays.copyOf(dados, dados.length);
         int tamanho = dadosOrdenados.length;
         iniciar();
-        for (int i = tamanho - 1; i > 0; i--) {
-            for (int j = 0; j < i; j++) {
-                comparacoes++;
-                if ((dadosOrdenados[j].compareTo(dadosOrdenados[j+1]) > 0))
-                swap (j, j + 1, dadosOrdenados);
-            }
-        }	
-        terminar();
+
+        /**Código para fazer a ordenação*/
+        
         return dadosOrdenados;
     }
 }
