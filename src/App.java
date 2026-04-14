@@ -1,106 +1,219 @@
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.Collections;
+import java.util.Scanner;
+
+/**
+ * MIT License
+ *
+ * Copyright(c) 2022-25 João Caram <caram@pucminas.br>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 public class App {
-    static final int[] tamanhosTesteGrande =  { 31_250_000, 62_500_000, 125_000_000, 250_000_000, 500_000_000 };
-    static final int[] tamanhosTesteMedio =   {     12_500,     25_000,      50_000,     100_000,     200_000 };
-    static final int[] tamanhosTestePequeno = {          3,          6,          12,          24,          48 };
-    static Random aleatorio = new Random();
-    static long operacoes;
-    static double nanoToMilli = 1.0/1_000_000;
+
+    static final int MAX_PEDIDOS = 100;
+    static Produto[] produtos;
+    static int quantProdutos = 0;
+    static String nomeArquivoDados = "produtos.txt";
+    static IOrdenador<Produto> ordenador;
+
+    // #region utilidades
+    static Scanner teclado;
+
     
-    /**
-     * Gerador de vetores aleatórios de tamanho pré-definido. 
-     * @param tamanho Tamanho do vetor a ser criado.
-     * @return Vetor com dados aleatórios, com valores entre 1 e (tamanho/2), desordenado.
-     */
-    static int[] gerarVetor(int tamanho){
-        int[] vetor = new int[tamanho];
-        for (int i = 0; i < tamanho; i++) {
-            vetor[i] = aleatorio.nextInt(1, tamanho/2);
+
+    static <T extends Number> T lerNumero(String mensagem, Class<T> classe) {
+        System.out.print(mensagem + ": ");
+        T valor;
+        try {
+            valor = classe.getConstructor(String.class).newInstance(teclado.nextLine());
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                | NoSuchMethodException | SecurityException e) {
+            return null;
         }
-        return vetor;        
+        return valor;
     }
 
-    /**
-     * Gerador de vetores de objetos do tipo Integer aleatórios de tamanho pré-definido. 
-     * @param tamanho Tamanho do vetor a ser criado.
-     * @return Vetor de Objetos Integer com dados aleatórios, com valores entre 1 e (tamanho/2), desordenado.
-     */
-    static Integer[] gerarVetorObjetos(int tamanho) {
-        Integer[] vetor = new Integer[tamanho];
-        for (int i = 0; i < tamanho; i++) {
-            vetor[i] = aleatorio.nextInt(1, 10 * tamanho);
+    static void limparTela() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
+
+    static void pausa() {
+        System.out.println("Tecle Enter para continuar.");
+        teclado.nextLine();
+    }
+
+    static void cabecalho() {
+        limparTela();
+        System.out.println("XULAMBS COMÉRCIO DE COISINHAS v0.2\n================");
+    }
+    
+
+    static int exibirMenuPrincipal() {
+        cabecalho();
+        System.out.println("1 - Procurar produto");
+        System.out.println("2 - Filtrar produtos por preço máximo");
+        System.out.println("3 - Ordenar produtos");
+        System.out.println("4 - Embaralhar produtos");
+        System.out.println("5 - Listar produtos");
+        System.out.println("0 - Finalizar");
+       
+        return lerNumero("Digite sua opção", Integer.class);
+    }
+
+    static int exibirMenuOrdenadores() {
+        cabecalho();
+        System.out.println("1 - Bolha");
+        System.out.println("2 - Inserção");
+        System.out.println("3 - Seleção");
+        System.out.println("4 - Mergesort");
+        System.out.println("0 - Finalizar");
+       
+        return lerNumero("Digite sua opção", Integer.class);
+    }
+
+    static int exibirMenuComparadores() {
+        cabecalho();
+        System.out.println("1 - Padrão");
+        System.out.println("2 - Por código");
+        
+        return lerNumero("Digite sua opção", Integer.class);
+    }
+
+    // #endregion
+    static Produto[] carregarProdutos(String nomeArquivo){
+        Scanner dados;
+        Produto[] dadosCarregados;
+        try{
+            dados = new Scanner(new File(nomeArquivo));
+            int tamanho = Integer.parseInt(dados.nextLine());
+            
+            dadosCarregados = new Produto[tamanho];
+            while (dados.hasNextLine()) {
+                Produto novoProduto = Produto.criarDoTexto(dados.nextLine());
+                dadosCarregados[quantProdutos] = novoProduto;
+                quantProdutos++;
+            }
+            dados.close();
+        }catch (FileNotFoundException fex){
+            System.out.println("Arquivo não encontrado. Produtos não carregados");
+            dadosCarregados = null;
         }
-        return vetor;
+        return dadosCarregados;
+    }
+
+
+    static Produto localizarProduto() {
+        cabecalho();
+        System.out.println("Localizando um produto");
+        int numero = lerNumero("Digite o identificador do produto", Integer.class);
+        Produto localizado = null;
+        
+        for (int i = 0; i < quantProdutos && localizado == null; i++) {
+            if (produtos[i].hashCode() == numero)
+                localizado = produtos[i];
+        }
+        return localizado;
+    }
+
+    private static void mostrarProduto(Produto produto) {
+        cabecalho();
+        String mensagem = "Dados inválidos";
+        
+        if(produto!=null){
+            mensagem = String.format("Dados do produto:\n%s", produto);            
+        }
+        
+        System.out.println(mensagem);
+    }
+
+    private static void filtrarPorPrecoMaximo(){
+        cabecalho();
+        System.out.println("Filtrando por valor máximo:");
+        double valor = lerNumero("valor", Double.class);
+        StringBuilder relatorio = new StringBuilder();
+        for (int i = 0; i < quantProdutos; i++) {
+            if(produtos[i].valorDeVenda() < valor)
+            relatorio.append(produtos[i]+"\n");
+        }
+        System.out.println(relatorio.toString());
+    }
+
+    static void ordenarProdutos(){
+        cabecalho();
+        
+        int opcao = exibirMenuOrdenadores();
+        switch (opcao) {
+                case 1 -> ordenador = new Bubblesort<>();
+                case 2 -> ordenador = new Insertsort<>();
+                case 3 -> ordenador = new Mergesort<>();
+                case 4 -> ordenador = new Selectionsort<>();
+            }
+        ordenador = null;
+    }
+
+    static void embaralharProdutos(){
+        Collections.shuffle(Arrays.asList(produtos));
+    }
+
+    static void verificarSubstituicao(Produto[] dadosOriginais, Produto[] copiaDados){
+        cabecalho();
+        System.out.print("Deseja sobrescrever os dados originais pelos ordenados (S/N)?");
+        String resposta = teclado.nextLine().toUpperCase();
+        if(resposta.equals("S"))
+            dadosOriginais = Arrays.copyOf(copiaDados, copiaDados.length);
+    }
+
+    static void listarProdutos(){
+        cabecalho();
+        for (int i = 0; i < quantProdutos; i++) {
+            System.out.println(produtos[i]);
+        }
     }
 
     public static void main(String[] args) {
-        int tam = 20;
-        Integer[] vetor = gerarVetorObjetos(tam);
-    
-        /**==================== BUBBLESORT ====================*/
+        teclado = new Scanner(System.in);
+        
+        produtos = carregarProdutos(nomeArquivoDados);
+        embaralharProdutos();
 
-        BubbleSort<Integer> bolha = new BubbleSort<>();
-
-        Integer[] vetorOrdenadoBolha = bolha.ordenar(vetor);
-
-        System.out.println("\nVetor ordenado método Bolha:");
-        System.out.println("Comparações: " + bolha.getComparacoes());
-        System.out.println("Movimentações: " + bolha.getMovimentacoes());
-        System.out.println("Tempo de ordenação (ms): " + bolha.getTempoOrdenacao());
-
-        /**==================== INSERTIONSORT ====================*/
-
-        InsertionSort<Integer> insertion = new InsertionSort<>();
-
-        Integer[] vetorOrdenadoInsertion = insertion.ordenar(vetor);
-
-        System.out.println("\nVetor ordenado método Insertion:");
-        System.out.println("Comparações: " + insertion.getComparacoes());
-        System.out.println("Movimentações: " + insertion.getMovimentacoes());
-        System.out.println("Tempo de ordenação (ms): " + insertion.getTempoOrdenacao());
-
-        /**==================== SELECTIONSORT ====================*/
-
-        Selectionsort<Integer> selection = new Selectionsort<>();
-
-        Integer[] vetorOrdenadoSelection = selection.ordenar(vetor);
-
-        System.out.println("\nVetor ordenado método Selection:");
-        System.out.println("Comparações: " + selection.getComparacoes());
-        System.out.println("Movimentações: " + selection.getMovimentacoes());
-        System.out.println("Tempo de ordenação (ms): " + selection.getTempoOrdenacao());   
-    
-        /** Varie o tamanho do vetor a ser ordenado e compare o desempenho dos algoritmos tanto em relação à quantidade de comparações, quanto de movimentações ao ordenar o mesmo array.*/
-
-        int[] tamanhos = {10, 100, 1000};
-
-        for (int t : tamanhos) {
-            System.out.println("\n===== TAMANHO: " + t + " =====");
-
-            Integer[] v = gerarVetorObjetos(t);
-
-            BubbleSort<Integer> b = new BubbleSort<>();
-            b.ordenar(v);
-            System.out.println("\n--- BubbleSort ---");
-            System.out.println("Bubble -> Comparações: " + b.getComparacoes());
-            System.out.println("Bubble -> Movimentações: " + b.getMovimentacoes());
-            System.out.println("Bubble -> Tempo: " + b.getTempoOrdenacao());
-
-            InsertionSort<Integer> i = new InsertionSort<>();
-            i.ordenar(v);
-            System.out.println("\n--- InsertionSort ---");
-            System.out.println("Insertion -> Comparações: " + i.getComparacoes());
-            System.out.println("Insertion -> Movimentações: " + i.getMovimentacoes());
-            System.out.println("Insertion -> Tempo: " + i.getTempoOrdenacao());
-
-            Selectionsort<Integer> s = new Selectionsort<>();
-            s.ordenar(v);
-            System.out.println("\n--- Selectionsort ---");
-            System.out.println("Selection -> Comparações: " + s.getComparacoes());
-            System.out.println("Selection -> Movimentações: " + s.getMovimentacoes());
-            System.out.println("Selection -> Tempo: " + s.getTempoOrdenacao());
-        }
-    }    
+        int opcao = -1;
+        
+        do {
+            opcao = exibirMenuPrincipal();
+            switch (opcao) {
+                case 1 -> mostrarProduto(localizarProduto());
+                case 2 -> filtrarPorPrecoMaximo();
+                case 3 -> ordenarProdutos();
+                case 4 -> embaralharProdutos();
+                case 5 -> listarProdutos();
+                case 0 -> System.out.println("FLW VLW OBG VLT SMP.");
+            }
+            pausa();
+        }while (opcao != 0);
+        teclado.close();
+    }                        
 }
