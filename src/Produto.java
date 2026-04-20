@@ -86,6 +86,22 @@ public abstract class Produto implements Comparable<Produto> {
      * @return Valor de venda do produto (double, positivo)
      */
     public abstract double valorDeVenda();
+
+    /**
+     * Getter do identificador do produto.
+     * @return id do produto
+     */
+    public int getIdProduto() {
+        return idProduto;
+    }
+
+    /**
+     * Getter da descrição do produto.
+     * @return descrição do produto
+     */
+    public String getDescricao() {
+        return descricao;
+    }
     
     @Override
     /**
@@ -110,15 +126,14 @@ public abstract class Produto implements Comparable<Produto> {
 
     @Override
     /**
-     * Comparação padrão do produto: identificador/hash code.
-     * Retorna um valor negativo se este produto tem um identificador anterior ao outro,
-     * valor positivo se o identificador é posterior ao outro. Para o mesmo produto, o
-     * retorno é 0.
+     * Comparação padrão do produto: descrição.
+     * Retorna um valor negativo se este produto vier antes do outro alfabeticamente,
+     * valor positivo se vier depois. Para a mesma descrição, o retorno é 0.
      * @param outro Produto a ser comparado
-     * @return Int de acordo com a regra padrão de Comparable (descrita acima)
+     * @return Int de acordo com a regra padrão de Comparable
      */
     public int compareTo(Produto outro){
-        return this.descricao.compareTo(outro.descricao);
+        return this.descricao.compareToIgnoreCase(outro.descricao);
     }
 
     /**
@@ -135,6 +150,7 @@ public abstract class Produto implements Comparable<Produto> {
             return false;
         }
     }
+
     /**
      * Cria um produto a partir de uma linha de dados em formato texto. A linha de dados deve estar de acordo com a formatação
      * "tipo; descrição;preçoDeCusto;margemDeLucro;[dataDeValidade]"
