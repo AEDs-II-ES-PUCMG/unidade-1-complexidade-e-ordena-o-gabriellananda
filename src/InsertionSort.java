@@ -1,62 +1,67 @@
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Comparator;
 
-public class InsertionSort<T extends Comparable<T>> implements IOrdenador<T> {
-    private int comparacoes;
-    private int movimentacoes;
-    private double tempoOrdenacao;
-    private double inicio;
+public class InsertionSort<T extends Comparable<T>> implements IOrdenador<T>{
 
-    private double nanoToMilli = 1.0/1_000_000;
+	private long comparacoes;
+	private long movimentacoes;
+	private LocalDateTime inicio;
+	private LocalDateTime termino;	
+	
+	public InsertionSort() {
+		comparacoes = 0;
+		movimentacoes = 0;
+	}
+	
+	@Override
+	public T[] ordenar(T[] dados) {
+		return ordenar(dados, T::compareTo);
+	}
 
-    @Override
-    public int getComparacoes() {
-        return comparacoes;
-    }
+	@Override
+	public T[] ordenar(T[] dados, Comparator<T> comparador) {
+		comparacoes = 0;
+		movimentacoes = 0;
 
-    @Override
-    public int getMovimentacoes() {
-        return movimentacoes;
-    }
+		T[] dadosOrdenados = Arrays.copyOf(dados, dados.length);
+		int tamanho = dadosOrdenados.length;
+		
+		inicio = LocalDateTime.now();
+		
+		for (int posReferencia = 1; posReferencia <= tamanho -1; posReferencia++) {
+			T valor = dadosOrdenados[posReferencia];
+            int j = posReferencia-1;
 
-    @Override
-    public double getTempoOrdenacao() {
-        return tempoOrdenacao;
-    }
-
-    private void iniciar(){
-        this.comparacoes = 0;
-        this.movimentacoes = 0;
-        this.inicio = System.nanoTime();
-    }
-
-    private void terminar(){
-        this.tempoOrdenacao = (System.nanoTime() - this.inicio) * nanoToMilli;
-    }
-
-    private void swap(int x, int y, T[] vetor) {
-        T temp = vetor[x];
-        vetor[x] = vetor[y];
-        vetor[y] = temp;
-        movimentacoes+=3;
-    }
-
-    @Override
-    public T[] ordenar(T[] dados) {
-        T[] dadosOrdenados = Arrays.copyOf(dados, dados.length);
-        int tamanho = dadosOrdenados.length;
-        iniciar();
-        for (int i = 1; i < tamanho; i++) {
-            T temp = dadosOrdenados[i];
-            int j = i - 1;
-            while (j >= 0 && dadosOrdenados[j].compareTo(temp) > 0) {
-                dadosOrdenados[j+1] = dadosOrdenados[j];
+            while(j >=0 && comparador.compare(valor,dadosOrdenados[j]) <0){
+                comparacoes++;
+                dadosOrdenados[j + 1] = dadosOrdenados[j];
+                movimentacoes++;
                 j--;
-                this.comparacoes++;
-                this.movimentacoes++;            
             }
-            dadosOrdenados[j+1] = temp;
-        }	
-        terminar();
-        return dadosOrdenados;
-    }
+
+            if(j >= 0)
+                comparacoes++;
+            
+            dadosOrdenados[j+1] = valor;
+            movimentacoes++;
+            
+		}	
+		termino = LocalDateTime.now();
+
+		return dadosOrdenados;
+	}
+	
+	public long getComparacoes() {
+		return comparacoes;
+	}
+	
+	public long getMovimentacoes() {
+		return movimentacoes;
+	}
+	
+	public double getTempoOrdenacao() {
+	    return Duration.between(inicio, termino).toNanos() / 1_000_000.0;
+	}
 }

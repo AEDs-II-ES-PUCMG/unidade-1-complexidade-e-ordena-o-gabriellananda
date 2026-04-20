@@ -3,13 +3,13 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class Selectionsort<T extends Comparable<T>> implements IOrdenador<T>{
+public class SelectionSort<T extends Comparable<T>> implements IOrdenador<T>{
     private long comparacoes;
 	private long movimentacoes;
 	private LocalDateTime inicio;
 	private LocalDateTime termino;	
 	
-	public Selectionsort() {
+	public SelectionSort() {
 		comparacoes = 0;
 		movimentacoes = 0;
 	}
@@ -21,6 +21,9 @@ public class Selectionsort<T extends Comparable<T>> implements IOrdenador<T>{
 	
 	@Override
 	public T[] ordenar(T[] dados, Comparator<T> comparador) {
+		comparacoes = 0;
+		movimentacoes = 0;
+
 		T[] dadosOrdenados = Arrays.copyOf(dados, dados.length);
 		int tamanho = dadosOrdenados.length;
 		
@@ -58,6 +61,6 @@ public class Selectionsort<T extends Comparable<T>> implements IOrdenador<T>{
 	}
 	
 	public double getTempoOrdenacao() {
-	    return  0;
+	    return Duration.between(inicio, termino).toNanos() / 1_000_000.0;
 	}
 }
